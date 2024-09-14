@@ -7,14 +7,14 @@ This is by far, the shortest section. The majority of this DLL is focused on set
 
 ### Starting checks
 After the processing is moved over to the DLL, the DLL will begin by checking whether it is the only copy of itself running or not:
-```cpp
+```c
 if ( passed_zero || EnsureOnlyInstance() )
    return 0;
 ```
 Similarly to before, the `EnsureOnlyInstance` function will attempt to open up a mutex, if it is unable to do so, the program executable will exit. If this DLL is ran with a 1 instead of a zero, this check can be bypassed.
 
 After checking that it is the only instance running, the DLL will fix the current directory context to be at the root of the executable file.
-```cpp
+```c
 GetModuleFileNameW(hModule, FileNameSelf, 259u);
   if (wcsrchr(FileNameSelf, '\\') )
     *wcsrchr(FileNameSelf, '\\') = 0;
@@ -24,7 +24,7 @@ GetModuleFileNameW(hModule, FileNameSelf, 259u);
 After this, the process will check if it has `SYSTEM` privileges by looking at the process token's privileges, this function is particularly interesting so I will refrain from adding it here.
 
 The process will load the previously loaded `kernel32.dll` functions using `GetProcAddress` and use them later on in the process. In similar preparations, the process will initialize the Windows cryptography context for future use.
-```cpp
+```c
   if ( CheckIfOnlyRunningProcess(0) || TestCrypto(0) )
   {
     thread_handle = CreateThread(0, 0, CreateDecryptorAddPersistence, 0, 0, 0);
@@ -37,7 +37,7 @@ Here, the part we are interested in is the `CreateDecryptorAddPersistence` funct
 
 ### CreateDecryptorAddPersistence function
 Looking at the code for this
-```cpp
+```c
 while ( 1 )
  {
    if ( time(0) >= unk_time && unk_value > 0 )
@@ -68,7 +68,7 @@ As this is run in a while loop, I am assuming that this will be checking if the 
 
 ### AddPersistenceToSelf
 The `AddPersistenceToSelf` function will add the `taskche.exe` file to be auto run on login.
-```cpp
+```c
 strcpy(registery_key, "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
 if ( IsMemberOfSystem() )
   qmemcpy(&registery_key[2], "LM", 2);
