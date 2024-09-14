@@ -359,4 +359,4 @@ The entire encrypted DLL file was very shaky compared to everything else during 
 
 I retreived the unencrypted DLL by via dynamic analysis. This was by far the fastest way to go about this and while it saved time, I could have maybe learnt more by sticking to static analysis.
 
-Some funny accidents happened during dynamic analysis, [forgetting to `NOP` out certain instructions](img_link) resulted in some late night laughs. Copying over the unencrypted dll's hex text to my host machine resulted in defender [throwing a hissy fit](img_link_2), slowing everything down for 15 minutes.
+Some funny accidents happened during dynamic analysis, [forgetting to `NOP` out certain instructions](https://raw.githubusercontent.com/Chalkybot/Reversing-Wannacry/refs/heads/main/images/oops.png) resulted in some late night laughs. Copying over the unencrypted dll's hex text to my host machine resulted in defender [throwing a hissy fit](https://raw.githubusercontent.com/Chalkybot/Reversing-Wannacry/refs/heads/main/images/wrong_pc.png), slowing everything down for 15 minutes.
