@@ -7,9 +7,9 @@ I found this to be a very enjoyable sample to work on, especially for a beginner
 ## Foreword
 I am not a professional, there is quite a bit of guesswork as to what is going on at times. This will be clearly indicated by the use of tentative language.
 
-Some parts might and very well likely will be incorrect, but I generally speaking, I believe that I gained an okay level understanding of everything I was interested in.
+Some parts might and very well likely will be incorrect, but generally speaking, I believe that I gained an okay level understanding of everything I was interested in.
 
-I have not read enough malware analysis reports to have an grasp of that standards of what malware analysis reports should hold, please keep this in mind while reading.
+I have not read enough malware analysis reports to have a grasp of that standards of what malware analysis reports should hold, please keep this in mind while reading.
 
 I originally got interested in doing WannaCry, as it seemed like an infamous sample with plenty of things going on.
 My prior knowledge on WannaCry which was relevant to this analysis was the following:
