@@ -1,7 +1,7 @@
 ## Analysis
 
 ### The final part, the DLL
-Sha256: `1be0b96d502c268cb40da97a16952d89674a9329cb60bac81a96e01cf7356830` 
+sha256: `1be0b96d502c268cb40da97a16952d89674a9329cb60bac81a96e01cf7356830` 
 
 This is by far, the shortest section. The majority of this DLL is focused on setting up the GUI application and the file encryption, both parts which I am not interested in.
 
