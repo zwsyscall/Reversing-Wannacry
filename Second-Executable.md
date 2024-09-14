@@ -7,7 +7,7 @@ sha256: `ed01ebfbc9eb5bbea545af4d01bf5f1071661840480439c6e5babe8e080e41aa`
 
 ### The main function
 The second binary has a much more active main function with multiple different things going on. I will cut this up to pieces, to make sorting it easier.
-```cpp
+```c
 GetModuleFileNameA(0, FileNameSelf, 520u);
 GenerateRandomName(random_name);
 if ( *_p___argc() != 2                       
@@ -23,7 +23,7 @@ The process starts again by saving its executable path to the `FileNameSelf` var
 After saving this variable, it will generate a random name with the `GenerateRandomName` function.
 ### GenerateRandomName function
 At the start, the function initialize a random seed using the computer name:
-```cpp
+```c
 GetComputerNameW(computer_name, &nSize);
 i = 0;
 random_seed = 1;
@@ -42,7 +42,7 @@ srand(random_seed);
 This will iterate through the computer's name and use the number wide char representation of the individual characters of the name to generate a seed for generating random numbers later on.
 
 After generating the seed for the random number generator, the function will generate a random set of characters, between 8 - 15 characters long.
-```cpp
+```c
 running_number = 0;
 init_random = rand() % 8 + 8;
 if ( init_random > 0 )
@@ -56,7 +56,7 @@ if ( init_random > 0 )
 }
 ```
 After generating the character portion, the same function will add three random numbers to the end and return the generated random name.
-```cpp
+```c
 init_random_plus_3 = init_random + 3;
 while ( running_number < init_random_plus_3 )
 {
@@ -72,7 +72,7 @@ The point of this, is to create a random name that while it is random, is always
 
 ### The main function's if statement
 Jumping back to the main function again:
-```cpp
+```c
 GetModuleFileNameA(0, FileNameSelf, 520u);
 GenerateRandomName(random_name);
 if ( *_p___argc() != 2                            // <-- This
@@ -89,7 +89,7 @@ We can see that underneath the random name generator, there is a big if statemen
 If the process is not run with `/i`, the executable will first call the `CreateInstallFolder` function.
 ### CreateInstallFolder function
 The function is rather straightforward:
-```cpp
+```c
 MultiByteToWideChar(0, 0, random_name, -1, random_name_wchar, 99);
 GetWindowsDirectoryW(Buffer, 0x104u);         // C:\Windows
 swprintf(FileName, aSProgramdata, Buffer);    // C:\ProgramData
@@ -110,7 +110,7 @@ The function will iterate through `C:\Windows`, `C:\ProgramData` and `C:\Intel` 
 If it is unable to use any of these folders, the process will default to generating a temporary folder with the same, randomly generated name. 
 
 As the test in the if statment is flipped, if this succeeds, the program will move onto the next if statement's test: 
-```cpp
+```c
 (CopyFileA(FileNameSelf, FileName, 0), GetFileAttributesA(FileName) == -1)`
 ```
 This is a short test that'll attempt to copy itself to the file `tasksche.exe`, incidentally the same file name as used in the first binary. The final location will be in the previously created hidden folder, as the process's context was changed to there during the creation of the hidden folder.
@@ -118,13 +118,13 @@ This is a short test that'll attempt to copy itself to the file `tasksche.exe`, 
 ### HideBinary function
 The next and final function ran in the if statement evaluation is the `HideBinary` function. 
 
-```cpp
+```c
 GetFullPathNameA(FileName, 520u, Buffer, 0);  // Copies self to hidden directory, launches self from there
 return CreateSelfService(Buffer) && SingleInstanceCheck(60)
     || CreateSelfProcess(Buffer, 0, 0) && SingleInstanceCheck(60);
 ```
 This is a short function, and nothing that interesting is done here. If we look at the `CreateSelfService` function, the main point of interest is the following:
-```cpp
+```c
 sprintf(service_command, "cmd.exe /c \"%s\"", a1);
 new_service = CreateServiceA(
                 hSCManager,
@@ -149,7 +149,7 @@ Now, after the  `HideBinary()` function, we get to the meat of the main function
 
 ### Inside of the if statement
 The first thing the binary does it set its current directory to that of the executable file, I assume the point here is that the current context gets changed during the if statment test functions.
-```cpp
+```c
 if ( strrchr(FileNameSelf, '\\') )            // Checks if the fileNameSelf ends in a backslash
   *strrchr(FileNameSelf, '\\') = 0;
 SetCurrentDirectoryA(FileNameSelf);
@@ -158,7 +158,7 @@ After changing the context, the executable will run the `CreateRegisteryKey` fun
 ### CreateRegisteryKey function
 
 The main meat of the function is here:
-```cpp
+```c
 wcscat(dest, L"WanaCrypt0r");
 while ( 1 )
 {
@@ -208,7 +208,7 @@ This function can be called later on and by passing a zero to it, it will change
 After setting the registery key, the process will run the `DecryptAndWriteToDisk` function and pass it a zero and the string `WNcry@2ol7`.
 ### DecryptAndWriteToDisk function
 Similarly to how the initial dropper function worked, this function will look for a specified resource inside of itself and write it on the disk:
-```cpp
+```c
 resource_info_handle = FindResourceA(hModule, '\b\n', Type);
 resource_info_handle_cp = resource_info_handle;
 resource_handle = LoadResource(hModule, resource_info_handle);
@@ -247,7 +247,7 @@ The contents of the zip file:
 
 ### ReadCwnry function
 After extracting the zip files contents on the drive, the first function that is called is `ReadCwnry`. No arguments are passed to this function.
-```cpp
+```c
 char *bitcoin_address_list[3];
 bitcoin_address_list[0] = a13am4vw2dhxygx;
 bitcoin_address_list[1] = a12t9ydpgwuez9n;
@@ -284,7 +284,7 @@ Now, the process will dynamically load the following `kernel32.dll` and `advapi3
 Now that the process has loaded the required functions, it will initialize some sort of cryptography struct. I attempted to identify the specific struct type for a long time, but was unable to do so. I believe its from a foreign library and not a Windows native cryptography struct. My best guess would be some version of `ZLIB`.
 
 After initializing the cryptography structure, we get to the real meat of this executable.
-```cpp
+```c
 dll_start_position = FetchAndDecryptDLL(unknown_encryption_struct, t_wnry, &dll_size);
 if ( dll_start_position )
 {
@@ -301,7 +301,7 @@ Looking at the code, we are very interested in the `FetchAndDecryptDLL` function
 
 ### FetchAndDecryptDLL
 The important contents of this monstrocity of function are the following:
-```cpp
+```c
 handle_to_file = CreateFileA(filename, 0x80000000, 1u, 0, 3u, 0, 0);
 GetFileSizeEx(handle_to_file, &file_size);
 ReadFileDynamic(handle_to_file, &Buf1, 8u, &NumberOfBytesRead, 0);
@@ -339,7 +339,7 @@ After reading the encryption key, the process seems to read a variable which is 
 
 ### The ending of the main function
 Looking at the main again, we see that the rest of the function goes as follows:
-```cpp
+```c
 handle_to_library = LoadLibraryInMemory(dll_start_position, dll_size);
 if ( handle_to_library )
 {
