@@ -27,9 +27,11 @@ The scope of this write up, is to explain the crucial findings. This is not a sh
 As such, this write up does not cover everything, the encryption part as an example, is not interesting to me. Similarly, I am not interested in how the GUI part of the application works. I found the worm aspect along with the multiple different layers of the sample very interesting, so I focused on those.
 
 As this write up ended up being long, I have split this up to multiple parts:
-- The initial loader and spreader
-- The second executable
-- The final part, the DLL
+- [The initial loader and spreader](https://github.com/Chalkybot/Reversing-Wannacry/blob/main/First-Dropper.md)
+- [The second executable](https://github.com/Chalkybot/Reversing-Wannacry/blob/main/Second-Executable.md)
+- [The final part, the DLL](https://github.com/Chalkybot/Reversing-Wannacry/blob/main/Final-DLL.md)
+
+The DLL portion is very short compared to the other sections. This is due to the DLL mainly focusing on the encryption part of this ransomware and as previously mentioned, I was uninterested in this.
 
 ### Credits
 - F & A helped a great deal! :)
