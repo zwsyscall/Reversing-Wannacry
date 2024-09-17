@@ -3,20 +3,20 @@
 ### Section one, the loader and the spreader
 The sample I worked on was one PE file with a placeholder name, as this was a second hand executable, the original filename is lost. I aptly named this `wannacry.bin`.
 
-A The first thing I noticed about the exe was its size, it was 3.55mb. This is abnormally big for most programs.
+The first thing I noticed about the exe was its size, it was 3.55mb. This is abnormally big for most executables.
 
 sha256: `24d004a104d4d54034dbcffc2a4b19a11f39008a575aa614ea04703480b1022c`. 
 
 
 ### "Main"
-Opening this binary in the reversing tool of my choice and navigating to the the WinMain function, the first thing that I noticed was the following:
+Opening this binary in a reversing tool and navigating to the the WinMain function, the first thing that I noticed was the following `strcpy` function:
 ```c
 strcpy(death_url, "http://www.iuqerfsodp9ifjaposdfjhgosurijfaewrwergwea.com");
 ```
 
-I looked at the xrefs for the string's location but found no other mentions. This gives me the hunch that this is the function where the check for the killswitch domain is done, before anything else is ran. 
+I looked at the xrefs for the string's location but found no other mentions. This gives me a hunch that this is the function where the check for the kill switch domain is done. 
 
-Reading on, this does seem to be the case. A few difference `wininet.h` functions are called in order to test whether the aforementioned killswitch url is replying to queries:
+Reading on, this does seem to be the case. A few difference `wininet.h` functions are called in order to test whether the aforementioned kill switch url is replying to queries:
 ```c
 internet_handle = InternetOpenA(0, 1, 0, 0, 0);
 url_handle = InternetOpenUrlA(internet_handle, death_url, 0, 0, 0x84000000,0);
@@ -32,18 +32,19 @@ else
 }
 return 0;
 ```
-The process attempts to open the given URL, if it receives a reply, it will close the internet handle and return, exiting the process. If however the process does not receive any reply however, it will call the `WannaCryMain` function. We can assume that this is where the real execution of the malware, or at least some part of it begins.
+The process attempts to open a connection to the passed URL. If it receives a reply, it will close the internet handle and exit the process (As the `return` is in the main function, the process exits.). If however the process does not receive any reply however, it will call the `WannaCryMain` function. We can assume that this is where the real execution of the malware, or at least some part of it begins.
 
-### WannaCryMain function
-Moving on to the `WannaCryMain`, we can see that the process will save its own executable path to the `FileNameSelf` variable. Keep this in mind, as it will become important later on. After this,t he process will check the arguments it was run with:
+### WannaCryMain
+Moving on to the `WannaCryMain`, we can see that the process will save its own executable path to the `FileNameSelf` variable. Keep this in mind, as it will become important later on. After this, the process will check the arguments it was run with:
 ```c
 GetModuleFileNameA(0, FileNameSelf, 260u);
 if ( *_p___argc() < 2 )
   return ArgumentsParser();
 ```
 If the it was run with less than two arguments, which translates to no arguments as the first argument is the executable path, we will jump to the `ArgumentParser` function.
-This function in turn, will run two different functions.
-### ArgumentParser function
+
+### ArgumentParser
+This function in will run two different functions. The name is kind of misleading, as no operations are done on the passed arguments.
 ```c
 int ArgumentsParser()
 {
@@ -53,7 +54,7 @@ int ArgumentsParser()
 }
 ```
 Let's take a closer look at both of these functions.
-### CreateService function
+### CreateService
 The `CreateService` function is as follows:
 ```c
 sprintf(security_filename, "%s -m security", FileNameSelf);
@@ -83,13 +84,13 @@ CloseServiceHandle(scm_handle);
 return 0;
 ```
 Now, taking a closer look at this, we can determine a few interesting things.
-First, the process will use the executable name it retreived in the `WannaCryMain` function to create a string with the executable path two additional arguments. 
+First, the process will use the executable name it retrieved in the `WannaCryMain` function to create a string with the executable path and two additional but unused arguments. 
 Using this new string, the process will generate a service with the deceivingly Microsofty name of `mssecsvc2.0` and the display name of `Microsoft Security Center (2.0) Service`. 
 
-After creating the service, the process will start it with the `StartServiceA` call. As the service launches the same exe again with the addition of the two parameters, `-m security`. The actual arguments are unimportant, I assume these were decided on to give this the illusion of being authentic. We know the entire `ArgumentsParser` function will be skipped in the future, due to the argument length check.
+After creating the service, the process will start the service with the `StartServiceA` call. The service launches the same executable again with the addition of the two parameters, `-m security`. The actual arguments are unimportant, I assume these were decided on to give this the illusion of being authentic. Flags which conform to the norms are less suspicious than random strings, after all. We know that the entire `ArgumentsParser` function will be skipped in new newly created process, due to the argument length check.
 
 Before we look at the `UnpackBinary` function, let's look at what the created service does. After returning from the `ArgumentsParser` function, the following code will be ran:
-### More of the WannaCryMain function
+### Exploring WannaCryMain further
 ```c
 scm_handle = OpenSCManagerA(0, 0, 0xF003Fu);
 if ( scm_handle )
@@ -106,7 +107,7 @@ if ( scm_handle )
 ServiceStartTable.lpServiceName = ServiceName;
 ServiceStartTable.lpServiceProc = ServiceEntryPoint;
 ```
-As you might guess, the `ServiceName` variable refers to the previously created `mssecsvc2.0` service. My understanding of this is, that the code will modify service's entrypoint to be the `ServiceEntryPoint`. 
+As you might guess, the `ServiceName` variable refers to the previously created `mssecsvc2.0` service. My understanding of this is, that the code will modify service's entrypoint to be the `ServiceEntryPoint` function pointer. 
 ### ServiceEntryPoint function
 Opening `ServiceEntryPoint`, we see the following:
 ```c
@@ -146,27 +147,27 @@ if ( result )
 }
 return result;
 ```
-The function will generate a single thread which has the entrypoint of the `EternalBlueLocalRange` function. After generating this thread, the function generate 128 threads running the `EternalBlueRandomWanRange` function. 
+The function will create a single thread which has the entrypoint of the `EternalBlueLocalRange` function. After generating this thread, the function creates 128 threads which each will run the `EternalBlueRandomWanRange` function. 
 
-The `EternalBlueLocalRange` function is not that interesting, it will find the local network, iterate through it and attempt to spread through the EternalBlue SMBv1 exploit.
+The `EternalBlueLocalRange` function is not that interesting for this write up. As the name suggests, it will find the local network, iterate through it and attempt to spread to other machines with the EternalBlue SMBv1 exploit.
 
-I found the `EternalBlueRandomWanRange` function however, to be very interesting. The code is too verbose and complex to be in the scope of this write up to post here. In short, my understanding of the function is the following:
-- It will generate at a random WAN address. 
+I found the `EternalBlueRandomWanRange` function however, to be rather interesting. The code itself is too verbose and complex to be in the scope of this write up, especially as an inline function. In short, my understanding of the function is the following:
+- It will generate at a random WAN IP address. 
 - If it is valid, it will iterate the /16 range of the address for 40 minutes.
-- It will attempt to infect every host in the range
+- It will attempt to infect every host in the range with EternalBlue
 
-My immediate reaction to this was confusion, why not just directly iterate through the WAN range one by one? This seems less robust. Thinking about it more, I realised. If every host you infect does the same, every host after the first one will spend the majority if not all of its lifecycle iterating already infected machines, causing a denial of service.
+My immediate reaction to this was confusion, why not just directly iterate through the WAN IP range one by one? This seems less robust. Thinking about it more, I realised. If every host you infect would do the same, every host after the first one will spend the majority if not all of its lifecycle iterating already infected machines. The outcome of this will be a denial of service and the further hosts will not be able to speed up the world wide infection.
 
-I feel like the way the process solves this issue is smart. By iterating through random addresses, the likelihood of two infected machines having colliding random IP addresses is somewhat unlikely, making the spreading optimal.
+I feel like the way the process solves this issue is smart. By iterating through random addresses, the likelihood of two infected machines hitting colliding random IP addresses is somewhat unlikely, making the spreading optimal if you are unable to communicate with other hosts.
 
-Similarly to the `EternalBlueLocalRange`, after this function finds a host that's alive and listening in on port `445`, the process will attempt to abuse the eternalblue exploit.
+Similarly to the `EternalBlueLocalRange`, after this function finds a host that's alive and listening in on port `445`, the process will attempt to abuse the EternalBlue exploit.
 
 Recapping the service portion, the service acts as the main infector/spreader in this process. It will attempt to infect every machine on the local network, after which it will attempt to infect WAN machines.
 
 ### UnpackBinary function
-Now that we are done with the service portion, lets get back to the `ArgumentsParser` function. If you remember, after creating and launching the service, the function called something else, the `UnpackBinary` function. 
+Now that we are done with the service portion, lets get back to the `ArgumentsParser` function. If you remember, after creating and launching the service, the initial process will jump to the `UnpackBinary` function. 
 
-This pseudocode of function is very verbose, so I will omit parts that are not crucial in this write up:
+This pseudocode of function is very verbose, so I will omit parts that are not crucial for this write up:
 ```c
 ModuleHandleW = GetModuleHandleW(&ModuleName);
 ...
@@ -211,17 +212,19 @@ if ( new_tasksche_handle != -1 )
 }
 ```
 Looking at this function, the process first dynamically fetches the `kernel32.dll` functions `CreateProcessA`, `CreateFileA`, `WriteFile` and `CloseHandle`.
-This part slightly confused me, as looking at the imports of the process, we can see that the direct functions are used later on. I asume that parts of this code are pasted from other sources. 
-It is also possible that the purpose behind using `GetProcAddress` to fetch these functions is to avoid possible references, making analysis more difficult. I find this unlikely, as none of the code seems to be entirely unobfuscated.
+This part originally slightly confused me, as looking at the imports of the process, we can see that the direct functions are used later on. I assume that parts of this code are pasted from other sources. 
+It is also possible that the purpose behind using `GetProcAddress` to fetch these functions is to avoid possible references, making analysis more difficult. I find this unlikely, as none of the code seems to be entirely obfuscated.
 
 After acquiring the functions, the process will fetch a resource from inside the binary itself: 
-`FindResourceA(0, 0x727, Type);`
+```c
+FindResourceA(0, 0x727, Type);
+```
 This will locate a resource, with the type `R`. 
 
 Next, the process will attempt to move the file `C:\WINDOWS\tasksche.exe` to `C:\WINDOWS\qeriuwjhrf`.
 Looking at the `C:\WINDOWS\` directory, this executable does not exist on a clean machine. It is likely, that this is some sort of updating mechanism where the process could potentially keep an older version of itself in case it got ran again. I am however, unsure.
 
-After attempting to move the file, the process will write the resource it located inside of itself to the `C:\WINDOWS\tasksche.exe` binary, and attempt to launch it.
+After attempting to move the file, the process will write the resource it located inside of itself to the `C:\WINDOWS\tasksche.exe` binary and attempt to launch it.
 
 This piqued my interest, there is another executable file inside of this executable. Looking at the original executable in PE-bear, I looked at the Resources section and located the resource it was loading. The resource was `0x35a000` bytes long and began at offset `0x3100a4`. With this information, I wrote this dirty python extractor:
 ```python
@@ -235,7 +238,7 @@ with open("wannacry.bin", "rb") as f:
     with open("wannacry_part_2.bin", "wb") as output:
         output.write(data)
 ```
-While not very well written and being very stuffy, for a 10 second job, it got the job well done.
+While not very well written and being very stuffy, for a 10 second job, it got the job well done. I successfully extracted another executable and got to work.
 
 ## Afterthoughts
 After I saw the domain part, I was unsure as to why the person who originally registered it was confused about what would happen. Even just looking at the assembly side, it feels very obvious as to what is going on. It is possible they just fetched the strings and tried it?

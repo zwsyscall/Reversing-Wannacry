@@ -3,17 +3,17 @@
 ### The final part, the DLL
 sha256: `1be0b96d502c268cb40da97a16952d89674a9329cb60bac81a96e01cf7356830` 
 
-This is by far, the shortest section. The majority of this DLL is focused on setting up the GUI application and the file encryption, both parts which I am not interested in.
+This is by far, the shortest section. The majority of this DLL is focused on file encryption and setting up the GUI portion, both parts which I am not interested in.
 
 ### Starting checks
-After the processing is moved over to the DLL, the DLL will begin by checking whether it is the only copy of itself running or not:
+After the processing is moved over to the DLL, the process will begin by checking whether it is the only copy of itself running or not:
 ```c
 if ( passed_zero || EnsureOnlyInstance() )
    return 0;
 ```
-Similarly to before, the `EnsureOnlyInstance` function will attempt to open up a mutex, if it is unable to do so, the program executable will exit. If this DLL is ran with a 1 instead of a zero, this check can be bypassed.
+Similarly to before, the `EnsureOnlyInstance` function will attempt to open up a mutex, if it is unable to do so, the program executable will exit. Interestingly, if this DLL is ran with a 1 instead of a zero, this check can be bypassed. I assume this is a 
 
-After checking that it is the only instance running, the DLL will fix the current directory context to be at the root of the executable file.
+After checking that this is the only instance running, the process will fix the current directory context to be at the root of the executable file.
 ```c
 GetModuleFileNameW(hModule, FileNameSelf, 259u);
   if (wcsrchr(FileNameSelf, '\\') )
@@ -21,7 +21,7 @@ GetModuleFileNameW(hModule, FileNameSelf, 259u);
   SetCurrentDirectoryW(FileNameSelf);
 ```
 
-After this, the process will check if it has `SYSTEM` privileges by looking at the process token's privileges, this function is particularly interesting so I will refrain from adding it here.
+After this, the process will check if it has `SYSTEM` privileges by looking at the process token's privileges. This function is particularly uninteresting so I will refrain from adding it here.
 
 The process will load the previously loaded `kernel32.dll` functions using `GetProcAddress` and use them later on in the process. In similar preparations, the process will initialize the Windows cryptography context for future use.
 ```c
@@ -35,7 +35,7 @@ The process will load the previously loaded `kernel32.dll` functions using `GetP
 ```
 Here, the part we are interested in is the `CreateDecryptorAddPersistence` function. 
 
-### CreateDecryptorAddPersistence function
+### CreateDecryptorAddPersistence
 Looking at the code for this
 ```c
 while ( 1 )
@@ -63,7 +63,7 @@ while ( 1 )
    Sleep(30000u);
  }
 ```
-The process will sleep for an unknown period of time, after which, it will read the contents of the previously seeded c.wnry file and use that to initialize the decryptor GUI program.
+The process will sleep for an unspecified period of time, after which, it will read the contents of the previously seeded c.wnry file and use that to initialize the decryptor GUI program.
 As this is run in a while loop, I am assuming that this will be checking if the GUI program is dead and if it is, it will reinitialize it.
 
 ### AddPersistenceToSelf
