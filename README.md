@@ -29,7 +29,7 @@ As such, this write up does not cover everything, the encryption part as an exam
 As this write up ended up being long, I have split this up to multiple parts:
 - [The initial loader and spreader](https://github.com/Chalkybot/Reversing-Wannacry/blob/main/First-Dropper.md)
 - [The second executable](https://github.com/Chalkybot/Reversing-Wannacry/blob/main/Second-Executable.md)
-- [The final part, the DLL](https://github.com/Chalkybot/Reversing-Wannacry/blob/main/Final-DLL.md)
+- [The final part, the DLL](https://github.com/Chalkybot/Reversing-Wannacry/blob/main/Third-DLL.md)
 
 The DLL portion is very short compared to the other sections. This is due to the DLL mainly focusing on the encryption part of this ransomware and as previously mentioned, I was uninterested in this.
 
